@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS BIOHAZARD - COMMAND CENTER v7.7</title>
+    <!-- Tailwind CSS para UI/UX Moderna -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- jsPDF para Geração de Relatórios -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4B5563; }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans antialiased min-h-screen transition-colors duration-200" id="bodyCtx">
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="flex items-center justify-center min-h-screen px-4">
+        <div class="bg-gray-900 border border-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600/10 text-blue-500 rounded-xl mb-4 border border-blue-500/20">
+                    <i class="fa-solid fa-biohazard text-3xl animate-pulse"></i>
+                </div>
+                <h1 class="text-2xl font-bold tracking-tight">NEXUS v7.7</h1>
+                <p class="text-sm text-gray-400 mt-1">Laboratory Management System</p>
+            </div>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Login</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500"><i class="fa-solid fa-user"></i></span>
+                        <input type="text" id="loginUser" required class="w-full bg-gray-950 border border-gray-800 rounded-xl py-3 pl-10 pr-4 text-sm text-gray-100 focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Senha</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" id="loginPass" required class="w-full bg-gray-950 border border-gray-800 rounded-xl py-3 pl-10 pr-4 text-sm text-gray-100 focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-3 rounded-xl transition-colors shadow-lg text-sm">
+                    ENTRAR NO SISTEMA
+                </button>
+            </form>
+            <div class="mt-6 flex flex-col space-y-2 text-center text-xs">
+                <button onclick="toggleRegisterModal(true)" class="text-blue-400 hover:underline">Criar Nova Conta</button>
+                <button onclick="handleForgotPassword()" class="text-gray-500 hover:underline">Esqueci minha senha</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REGISTER MODAL -->
+    <div id="registerModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-gray-900 border border-gray-800 p-6 rounded-2xl w-full max-w-sm">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-user-plus text-blue-500"></i> Cadastrar Usuário</h3>
+            <form onsubmit="handleRegister(event)" class="space-y-3">
+                <input type="text" id="regNome" placeholder="Nome Completo" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+                <input type="text" id="regLogin" placeholder="Login" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+                <input type="email" id="regEmail" placeholder="E-mail" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+                <input type="password" id="regSenha" placeholder="Senha" required class="w-full bg-gray-950 border border-gray-800 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="toggleRegisterModal(false)" class="w-1/2 bg-gray-800 hover:bg-gray-700 text-xs py-2 rounded-lg">Cancelar</button>
+                    <button type="submit" class="w-1/2 bg-blue-600 hover:bg-blue-500 text-xs py-2 rounded-lg font-medium">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP INTERFACE -->
+    <div id="appScreen" class="hidden flex flex-col md:flex-row min-h-screen">
+        <aside class="w-full md:w-64 bg-gray-900 border-b md:border-b-0 md:border-r border-gray-800 flex flex-col justify-between shrink-0">
+            <div>
+                <div class="p-6 border-b border-gray-800 flex items-center gap-3">
+                    <i class="fa-solid fa-radiation text-amber-500 text-xl"></i>
+                    <div>
+                        <h2 class="font-bold text-sm tracking-wide">NEXUS COMMAND</h2>
+                        <p class="text-xs text-gray-500" id="userBadge">Carregando...</p>
+                    </div>
+                </div>
+                <nav class="p-4 space-y-1">
+                    <button onclick="switchModule('dashboard')" id="btn-dash" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-800/50 hover:text-gray-100 transition-all">
+                        <i class="fa-solid fa-chart-pie w-5"></i> Dashboard Projetos
+                    </button>
+                    <div class="h-px bg-gray-800 my-2"></div>
+                    <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest px-4 mb-1">Módulos CRUD</p>
+                    <button onclick="switchModule('biohackers')" id="btn-biohackers" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-800/50 hover:text-gray-100 transition-all">
+                        <i class="fa-solid fa-dna w-5"></i> Biohackers
+                    </button>
+                    <button onclick="switchModule('experimentos')" id="btn-experimentos" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-800/50 hover:text-gray-100 transition-all">
+                        <i class="fa-solid fa-flask-vial w-5"></i> Experimentos
+                    </button>
+                    <button onclick="switchModule('laboratorios')" id="btn-laboratorios" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-800/50 hover:text-gray-100 transition-all">
+                        <i class="fa-solid fa-building-shield w-5"></i> Laboratórios
+                    </button>
+                    <button onclick="switchModule('usuarios')" id="btn-usuarios" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-400 hover:bg-gray-800/50 hover:text-gray-100 transition-all">
+                        <i class="fa-solid fa-users-gear w-5"></i> Gestão Usuários
+                    </button>
+                </nav>
+            </div>
+            <div class="p-4 border-t border-gray-800 space-y-2">
+                <button onclick="toggleTheme()" class="w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-xs font-medium text-gray-400 hover:bg-gray-800 transition-colors">
+                    <span>Alternar Tema</span>
+                    <i class="fa-solid fa-circle-half-stroke text-sm"></i>
+                </button>
+                <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-4 py-2.5 bg-red-950/30 border border-red-900/30 hover:bg-red-900/40 text-red-400 rounded-lg text-xs font-semibold transition-colors">
+                    <i class="fa-solid fa-right-from-bracket"></i> SAIR DO SISTEMA
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-6 md:p-8 overflow-y-auto" style="max-height: 100vh;">
+            <!-- DASHBOARD VIEW -->
+            <div id="mod-dashboard" class="module-view space-y-6 hidden">
+                <div class="border-b border-gray-900 pb-5">
+                    <h2 class="text-xl font-bold tracking-tight">Dashboard de Projetos</h2>
+                    <p class="text-sm text-gray-500">Crie, monitore e visualize relatórios técnicos estendidos.</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 space-y-4">
+                        <h3 class="text-sm font-bold tracking-wide uppercase text-gray-400 flex items-center gap-2"><i class="fa-solid fa-folder-plus text-emerald-500"></i> Novo Projeto</h3>
+                        <form onsubmit="handleSaveProjeto(event)" class="space-y-3">
+                            <input type="text" id="projNome" placeholder="Nome do Projeto" required class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm focus:outline-none text-gray-100">
+                            <input type="text" id="projOrcamento" placeholder="Orçamento (Ex: R$ 500.000)" required class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm focus:outline-none text-gray-100">
+                            <select id="projBio" required class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-400 focus:outline-none"></select>
+                            <select id="projExp" required class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-400 focus:outline-none"></select>
+                            <select id="projLab" required class="w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm text-gray-400 focus:outline-none"></select>
+                            <div class="space-y-1">
+                                <label class="block text-xs font-semibold text-gray-500 uppercase">Esquema/Foto do Projeto</label>
+                                <input type="file" id="projFoto" accept="image/*" class="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-gray-800 file:text-gray-200 cursor-pointer">
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-xs text-gray-400 font-medium">
+                                    <span>Progresso</span>
+                                    <span id="progValue">50%</span>
+                                </div>
+                                <input type="range" id="projProg" min="0" max="100" value="50" oninput="document.getElementById('progValue').innerText = this.value + '%'" class="w-full accent-blue-500 bg-gray-800 h-2 rounded-lg cursor-pointer">
+                            </div>
+                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 rounded-xl text-xs transition-colors shadow-lg">
+                                <i class="fa-solid fa-file-pdf mr-1"></i> SALVAR E GERAR DOSSIÊ
+                            </button>
+                        </form>
+                    </div>
+                    <div class="lg:col-span-2 space-y-3">
+                        <h3 class="text-sm font-bold tracking-wide uppercase text-gray-400">Projetos em Execução</h3>
+                        <div id="projetosContainer" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mod-crud" class="module-view space-y-6 hidden">
+                <div class="border-b border-gray-900 pb-5">
+                    <h2 class="text-xl font-bold tracking-tight" id="crudTitle">Gestão de Módulo</h2>
+                    <p class="text-sm text-gray-500">Adicione, edite ou remova registros ativos.</p>
+                </div>
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 h-fit">
+                        <form id="crudForm" onsubmit="handleCrudSubmit(event)" class="space-y-4">
+                            <div id="crudInputsContainer" class="space-y-3"></div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2.5 rounded-xl text-xs transition-colors">
+                                SALVAR REGISTRO
+                            </button>
+                        </form>
+                    </div>
+                    <div class="xl:col-span-2 bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-xl">
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse text-left text-sm text-gray-400">
+                                <thead class="bg-gray-950 text-xs font-semibold uppercase tracking-wider text-gray-400 border-b border-gray-800" id="crudTableHead"></thead>
+                                <tbody class="divide-y divide-gray-800" id="crudTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="pdfViewerModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex flex-col z-50 p-4">
+        <div class="flex items-center justify-between max-w-5xl w-full mx-auto bg-gray-900 border border-gray-800 p-4 rounded-t-xl shrink-0">
+            <span id="pdfModalTitle" class="text-sm font-bold text-gray-200">Visualizador de Dossiê Nexus</span>
+            <button onclick="closePdfViewer()" class="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">Fechar</button>
+        </div>
+        <div class="max-w-5xl w-full mx-auto bg-white rounded-b-xl flex-1 overflow-hidden shadow-2xl relative">
+            <iframe id="pdfFrame" class="w-full h-full border-none" src=""></iframe>
+        </div>
+    </div>
+
+    <script>
+        const defaultDatabase = {
+            usuarios: [{ id: 1, nome: 'Administrador', login: 'admin', email: 'admin@nexus.com', senha: '123', nivel: 'Nível 5', foto: '' }],
+            biohackers: [{ id: 1, nome: 'Dr. Evelyn Vance', espec: 'Genética Sintética', registro: 'BH-9082', status: 'Ativo', foto: '' }],
+            experimentos: [{ id: 1, titulo: 'Projeto Chimerism v2', risco: 'Crítico / Nível 4', cep: 'CEP-5521', autorizacao: 'Aprovado', foto: '' }],
+            laboratorios: [{ id: 1, nome: 'Delta Lab Core', setor: 'Bio-Containment Tier 4', andar: 'Subsolo -3', capacidade: '12 Operadores', foto: '' }],
+            projetos: [{ id: 1, nome: 'Operação Mutagenesis X', orcamento: 'R$ 1.200.000', id_bio: 1, id_exp: 1, id_lab: 1, data: '09/11/2026', progresso: 65, id_usuario_registro: 1, foto: '' }]
+        };
+
+        if(!localStorage.getItem('NEXUS_DB')) localStorage.setItem('NEXUS_DB', JSON.stringify(defaultDatabase));
+        let db = JSON.parse(localStorage.getItem('NEXUS_DB'));
+        let currentUser = null, activeModule = 'dashboard', currentCrudTable = '', currentCrudFields = [], editingId = null, currentBase64Image = '', projectImageBase64 = '';
+
+        function saveDb() { localStorage.setItem('NEXUS_DB', JSON.stringify(db)); }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const found = db.usuarios.find(x => x.login === document.getElementById('loginUser').value && x.senha === document.getElementById('loginPass').value);
+            if(found) {
+                currentUser = found;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('appScreen').classList.remove('hidden');
+                document.getElementById('userBadge').innerText = `${found.nome} (${found.login})`;
+                switchModule('dashboard');
+            } else { alert('Credenciais incorretas.'); }
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('loginForm').reset();
+            document.getElementById('appScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        function toggleRegisterModal(show) { document.getElementById('registerModal').classList.toggle('hidden', !show); }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const l = document.getElementById('regLogin').value;
+            if(db.usuarios.some(x => x.login === l)) return alert('Login já existente.');
+            db.usuarios.push({ id: Date.now(), nome: document.getElementById('regNome').value, login: l, email: document.getElementById('regEmail').value, senha: document.getElementById('regSenha').value, nivel: 'Acesso Padrão', foto: '' });
+            saveDb(); alert('Conta criada!'); toggleRegisterModal(false);
+        }
+
+        function handleForgotPassword() {
+            const email = prompt("E-mail cadastrado:");
+            const found = db.usuarios.find(x => x.email === email);
+            if(found) {
+                const temp = Math.random().toString(36).substring(2, 10).toUpperCase();
+                found.senha = temp; saveDb(); alert(`Nova senha provisória: ${temp}`);
+            } else { alert('E-mail não localizado.'); }
+        }
+
+        const crudConfigs = {
+            biohackers: { title: "Biohackers Ativos", fields: [{id: "nome", label: "Nome", type: "text"}, {id: "espec", label: "Especialidade", type: "text"}, {id: "registro", label: "Registro", type: "text"}, {id: "status", label: "Status", type: "text"}, {id: "foto", label: "Foto", type: "file"}], headers: ["Foto", "ID", "Nome", "Especialidade", "Registro", "Status"] },
+            experimentos: { title: "Registro de Experimentos", fields: [{id: "titulo", label: "Título", type: "text"}, {id: "risco", label: "Risco", type: "text"}, {id: "cep", label: "CEP", type: "text"}, {id: "autorizacao", label: "Autorização", type: "text"}, {id: "foto", label: "Esquema", type: "file"}], headers: ["Esquema", "ID", "Título", "Risco", "CEP", "Autorização"] },
+            laboratorios: { title: "Infraestrutura", fields: [{id: "nome", label: "Nome", type: "text"}, {id: "setor", label: "Setor", type: "text"}, {id: "andar", label: "Andar", type: "text"}, {id: "capacidade", label: "Capacidade", type: "text"}, {id: "foto", label: "Foto", type: "file"}], headers: ["Instalação", "ID", "Nome", "Setor", "Andar", "Capacidade"] },
+            usuarios: { title: "Controle de Usuários", fields: [{id: "nome", label: "Nome", type: "text"}, {id: "login", label: "Login", type: "text"}, {id: "email", label: "E-mail", type: "email"}, {id: "nivel", label: "Nível", type: "text"}, {id: "foto", label: "Avatar", type: "file"}], headers: ["Avatar", "ID", "Nome", "Login", "E-mail", "Nível"] }
+        };
+
+        function switchModule(modName) {
+            activeModule = modName;
+            document.querySelectorAll('.module-view').forEach(x => x.classList.add('hidden'));
+            document.querySelectorAll('nav button').forEach(x => x.classList.remove('bg-blue-600/10', 'text-blue-500'));
+            if(document.getElementById(`btn-${modName}`)) document.getElementById(`btn-${modName}`).classList.add('bg-blue-600/10', 'text-blue-500');
+            if(modName === 'dashboard') { document.getElementById('mod-dashboard').classList.remove('hidden'); renderDashboard(); }
+            else { document.getElementById('mod-crud').classList.remove('hidden'); setupCrudModule(modName); }
+        }
+
+        function setupCrudModule(tableName) {
+            currentCrudTable = tableName; const config = crudConfigs[tableName]; currentCrudFields = config.fields; editingId = null; currentBase64Image = '';
+            document.getElementById('crudTitle').innerText = config.title;
+            const container = document.getElementById('crudInputsContainer');
+            container.innerHTML = `<h3 class="text-sm font-bold text-gray-400 uppercase">Atributos Estendidos</h3>`;
+            config.fields.forEach(f => {
+                if(f.type === 'file') {
+                    container.innerHTML += `<div><label class="block text-xs text-gray-500 uppercase mb-1">${f.label}</label><input type="file" accept="image/*" onchange="encodeImageFile(this)" class="w-full text-xs text-gray-400"></div>`;
+                } else {
+                    container.innerHTML += `<div><label class="block text-xs text-gray-500 uppercase mb-1">${f.label}</label><input type="${f.type}" id="crud-${f.id}" required class="w-full bg-gray-950 border border-gray-800 rounded-xl p-2 text-sm text-gray-100"></div>`;
+                }
+            });
+            let hr = '<tr>'; config.headers.forEach(h => hr += `<th class="px-6 py-3">${h}</th>`); hr += `<th class="px-6 py-3 text-right">Ações</th></tr>`;
+            document.getElementById('crudTableHead').innerHTML = hr;
+            renderCrudTable();
+        }
+
+        function encodeImageFile(el) {
+            if (!el.files || el.files.length === 0) return;
+            const file = el.files[0]; const r = new FileReader();
+            r.onloadend = function() { currentBase64Image = r.result; }; r.readAsDataURL(file);
+        }
+
+        function renderCrudTable() {
+            const tbody = document.getElementById('crudTableBody'); tbody.innerHTML = '';
+            db[currentCrudTable].forEach(item => {
+                const img = item.foto ? `<img src="${item.foto}" class="w-8 h-8 rounded-lg object-cover">` : `<div class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-gray-600"><i class="fa-solid fa-image"></i></div>`;
+                let row = `<tr class="hover:bg-gray-800/30 border-b border-gray-800/50"><td class="px-6 py-3">${img}</td><td class="px-6 py-3 font-mono text-xs text-blue-400">#${item.id}</td>`;
+                currentCrudFields.forEach(f => { if(f.id !== 'foto') row += `<td class="px-6 py-3 text-gray-300">${item[f.id] || '—'}</td>`; });
+                row += `<td class="px-6 py-3 text-right"><button onclick="editCrudItem(${item.id})" class="text-amber-500 px-2">Editar</button><button onclick="deleteCrudItem(${item.id})" class="text-red-500 px-2">Excluir</button></td></tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function handleCrudSubmit(e) {
+            e.preventDefault();
+            let payload = editingId ? db[currentCrudTable].find(x => x.id === editingId) : { id: Date.now(), foto: '' };
+            currentCrudFields.forEach(f => { if(f.id !== 'foto') payload[f.id] = document.getElementById(`crud-${f.id}`).value; });
+            if(currentBase64Image) payload.foto = currentBase64Image;
+            if(!editingId) db[currentCrudTable].push(payload);
+            saveDb(); document.getElementById('crudForm').reset(); editingId = null; currentBase64Image = ''; renderCrudTable();
+        }
+
+        function editCrudItem(id) {
+            const item = db[currentCrudTable].find(x => x.id === id); if(!item) return; editingId = id; currentBase64Image = item.foto;
+            currentCrudFields.forEach(f => { if(f.id !== 'foto') document.getElementById(`crud-${f.id}`).value = item[f.id] || ''; });
+        }
+
+        function deleteCrudItem(id) {
+            if(!confirm('Excluir?')) return; db[currentCrudTable] = db[currentCrudTable].filter(x => x.id !== id); saveDb(); renderCrudTable();
+        }
+
+        document.addEventListener('change', function(e) {
+            if(e.target && e.target.id === 'projFoto') {
+                if (!e.target.files || e.target.files.length === 0) return;
+                const file = e.target.files[0]; const reader = new FileReader();
+                reader.onloadend = function() { projectImageBase64 = reader.result; }; reader.readAsDataURL(file);
+            }
+        });
+
+        function renderDashboard() {
+            const upd = (id, list, key, txt) => {
+                const el = document.getElementById(id); el.innerHTML = `<option value="">Selecionar ${txt}</option>`;
+                list.forEach(x => el.innerHTML += `<option value="${x.id}">${x[key]}</option>`);
+            };
+            upd('projBio', db.biohackers, 'nome', 'Biohacker'); upd('projExp', db.experimentos, 'titulo', 'Experimento'); upd('projLab', db.laboratorios, 'nome', 'Laboratório');
+            const container = document.getElementById('projetosContainer'); container.innerHTML = '';
+            if(db.projetos.length === 0) { container.innerHTML = `<div class="p-8 text-center text-gray-500 text-sm">Nenhum projeto registrado.</div>`; return; }
+            db.projetos.forEach(p => {
+                const b = db.biohackers.find(x => x.id == p.id_bio)?.nome || 'N/A';
+                const ex = db.experimentos.find(x => x.id == p.id_exp)?.titulo || 'N/A';
+                const l = db.laboratorios.find(x => x.id == p.id_lab)?.nome || 'N/A';
+                const pImg = p.foto ? `<img src="${p.foto}" class="w-12 h-12 rounded-xl object-cover">` : `<div class="w-12 h-12 bg-gray-950 rounded-xl flex items-center justify-center text-gray-600"><i class="fa-solid fa-folder"></i></div>`;
+                container.innerHTML += `<div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"><div class="flex items-center gap-4">${pImg}<div><div class="flex items-center gap-2"><span class="bg-emerald-500/10 text-emerald-400 text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/20">${p.orcamento}</span><h4 class="text-sm font-bold text-gray-100">${p.nome}</h4></div><p class="text-xs text-gray-400">${b} • ${ex} • ${l}</p><div class="w-48 bg-gray-800 h-1 rounded-full mt-1 overflow-hidden"><div class="bg-blue-500 h-1" style="width: ${p.progresso}%"></div></div></div></div><div class="flex gap-2"><button onclick="triggerPdfView(${p.id})" class="bg-blue-600 px-3 py-1.5 rounded-xl text-xs font-semibold">Dossiê PDF</button><button onclick="deleteProjeto(${p.id})" class="text-gray-500 text-xs">Excluir</button></div></div>`;
+            });
+        }
+
+        function handleSaveProjeto(e) {
+            e.preventDefault();
+            const novoProj = { id: Date.now(), nome: document.getElementById('projNome').value, orcamento: document.getElementById('projOrcamento').value, id_bio: parseInt(document.getElementById('projBio').value), id_exp: parseInt(document.getElementById('projExp').value), id_lab: parseInt(document.getElementById('projLab').value), data: new Date().toLocaleDateString('pt-BR'), progresso: parseInt(document.getElementById('projProg').value), id_usuario_registro: currentUser.id, foto: projectImageBase64 };
+            db.projetos.push(novoProj); saveDb(); document.getElementById('projNome').value = ''; document.getElementById('projOrcamento').value = ''; document.getElementById('projFoto').value = ''; projectImageBase64 = ''; renderDashboard(); triggerPdfView(novoProj.id);
+        }
+
+        function deleteProjeto(id) { if(confirm('Excluir?')) { db.projetos = db.projetos.filter(x => x.id !== id); saveDb(); renderDashboard(); } }
+
+        function triggerPdfView(projId) {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF(); const p = db.projetos.find(x => x.id === projId); if(!p) return;
+            const bItem = db.biohackers.find(x => x.id == p.id_bio), eItem = db.experimentos.find(x => x.id == p.id_exp), lItem = db.laboratorios.find(x => x.id == p.id_lab), uReg = db.usuarios.find(x => x.id == p.id_usuario_registro) || currentUser;
+            doc.setFillColor(20, 24, 33); doc.rect(0, 0, 210, 42, 'F'); doc.setTextColor(255, 255, 255); doc.setFont("Helvetica", "bold"); doc.setFontSize(16); doc.text("NEXUS BIOHAZARD - EMBEDDED TECHNICAL DOSSIER", 15, 26);
+            doc.setTextColor(40, 50, 65); doc.setFontSize(10); doc.text(`Identificação Única: #${p.id}`, 15, 54); doc.text(`Título: ${p.nome}`, 15, 62); doc.text(`Orçamento: ${p.orcamento}`, 15, 70); doc.text(`Progresso: ${p.progresso}%`, 15, 78);
+            doc.line(15, 86, 195, 86); doc.setFont("Helvetica", "bold"); doc.text("Atributos Relacionais Vinculados", 15, 96); doc.setFont("Helvetica", "normal");
+            doc.text(`• Biohacker: ${bItem ? bItem.nome : 'N/A'} (Reg: ${bItem ? bItem.registro : 'N/A'})`, 15, 106); doc.text(`• Experimento: ${eItem ? eItem.titulo : 'N/A'} (Risco: ${eItem ? eItem.risco : 'N/A'})`, 15, 116); doc.text(`• Unidade: ${lItem ? lItem.nome : 'N/A'} (Local: ${lItem ? lItem.andar : 'N/A'})`, 15, 126);
+            if (p.foto) { try { doc.setFont("Helvetica", "bold"); doc.text("Anexo Técnico:", 15, 142); doc.addImage(p.foto, 'JPEG', 15, 148, 60, 50); } catch(e) {} }
+            doc.setFont("Helvetica", "italic"); doc.setFontSize(8); doc.text(`Operador: ${uReg.login} (${uReg.email}) | Data: ${new Date().toLocaleString('pt-BR')}`, 15, 282);
+            document.getElementById('pdfFrame').src = doc.output('datauristring'); document.getElementById('pdfModalTitle').innerText = `Dossiê Avançado - ${p.nome}`; document.getElementById('pdfViewerModal').classList.remove('hidden');
+        }
+
+        function closePdfViewer() { document.getElementById('pdfViewerModal').classList.add('hidden'); document.getElementById('pdfFrame').src = ''; }
+        function toggleTheme() { const html = document.documentElement; html.classList.toggle('dark'); const isDark = html.classList.contains('dark'); document.getElementById('bodyCtx').className = isDark ? "bg-gray-950 text-gray-100 font-sans antialiased min-h-screen transition-colors duration-200" : "bg-gray-50 text-gray-900 font-sans antialiased min-h-screen transition-colors duration-200"; }
+    </script>
+</body>
+</html>
